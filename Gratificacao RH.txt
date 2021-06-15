@@ -1,0 +1,55 @@
+!pip install networkx==2.3
+!pip install scikit-fuzzy
+
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+
+
+
+
+# Cria as variáveis do problema
+experiencia = ctrl.Antecedent(np.arange(0, 31, 1), 'experiencia')
+capacitacao = ctrl.Antecedent(np.arange(0, 16, 0.1), 'capacitacao')
+gratificacao = ctrl.Consequent(np.arange(0, 1001, 1), 'gratificacao')
+
+# Cria automaticamente o mapeamento entre valores nítidos e difusos 
+# usando uma função de pertinência padrão (triângulo)
+experiencia.automf(names=['pouca', 'media', 'muita'])
+
+
+# Cria as funções de pertinência usando tipos variados
+capacitacao.automf(names=['fraca', 'media', 'forte'])
+
+
+gratificacao.automf(names=['muito-baixa', 'baixa', 'media','alta', 'muito-alta'])
+
+experiencia.view()
+capacitacao.view()
+gratificacao.view()
+
+rule1 = ctrl.Rule(capacitacao['fraca'] & experiencia['pouca'], gratificacao['muito-baixa'])
+rule2 = ctrl.Rule(capacitacao['fraca'] & experiencia['media'], gratificacao['baixa'])
+rule3 = ctrl.Rule(capacitacao['fraca'] & experiencia['muita'], gratificacao['media'])
+rule4 = ctrl.Rule(capacitacao['media'] & experiencia['pouca'], gratificacao['baixa'])
+rule5 = ctrl.Rule(capacitacao['media'] & experiencia['media'], gratificacao['media'])
+rule6 = ctrl.Rule(capacitacao['media'] & experiencia['muita'], gratificacao['alta'])
+rule7 = ctrl.Rule(capacitacao['forte'] & experiencia['pouca'], gratificacao['media'])
+rule8 = ctrl.Rule(capacitacao['forte'] & experiencia['media'], gratificacao['alta'])
+rule9 = ctrl.Rule(capacitacao['forte'] & experiencia['muita'], gratificacao['muito-alta'])
+
+gratificacao_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9])
+gratificacao_simulador = ctrl.ControlSystemSimulation(gratificacao_ctrl)
+
+# Entrando com alguns valores para qualidade da comida e do serviço
+gratificacao_simulador.input['experiencia'] = 20
+gratificacao_simulador.input['capacitacao'] = 10
+
+# Computando o resultado
+gratificacao_simulador.compute()
+print("gratificacao =",round(gratificacao_simulador.output['gratificacao'], 2),"%")
+
+experiencia.view(sim=gratificacao_simulador)
+capacitacao.view(sim=gratificacao_simulador)
+gratificacao.view(sim=gratificacao_simulador)
+
